@@ -23,8 +23,9 @@ export const getUploadUrl = api<UploadUrlRequest, UploadUrlResponse>(
     const extension = req.filename.split('.').pop() || '';
     const storageKey = `${fileId}.${extension}`;
     
+    // Extended TTL for large file uploads
     const { url } = await mediaBucket.signedUploadUrl(storageKey, {
-      ttl: 3600, // 1 hour
+      ttl: 7200, // 2 hours for large video uploads
     });
 
     return {

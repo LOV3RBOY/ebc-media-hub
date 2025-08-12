@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileImage, FileVideo, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, FileImage, FileVideo, X, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
@@ -14,7 +14,7 @@ interface UploadZoneProps {
 export function UploadZone({ onUploadComplete }: UploadZoneProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
-  const { uploadFiles, uploadProgress, isUploading } = useUploadFiles();
+  const { uploadFiles, uploadProgress, isUploading, currentFile } = useUploadFiles();
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -40,18 +40,27 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
   const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'],
-      'video/*': ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'],
+      'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg', '.heic', '.raw'],
+      'video/*': ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v', '.wmv', '.flv', '.3gp'],
     },
-    maxSize: 500 * 1024 * 1024, // 500MB
+    maxSize: 2 * 1024 * 1024 * 1024, // 2GB for high-quality videos
     disabled: isUploading,
   });
 
   React.useEffect(() => {
     if (fileRejections.length > 0) {
+      const rejectedFile = fileRejections[0];
+      let message = "Some files were rejected.";
+      
+      if (rejectedFile.errors.some(e => e.code === 'file-too-large')) {
+        message = "File too large. Maximum size is 2GB.";
+      } else if (rejectedFile.errors.some(e => e.code === 'file-invalid-type')) {
+        message = "Invalid file type. Please upload images or videos only.";
+      }
+      
       toast({
         title: "Upload rejected",
-        description: "Some files were rejected. Please check file types and sizes.",
+        description: message,
         variant: "destructive",
       });
     }
@@ -137,7 +146,7 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
                   <FileVideo className="w-4 h-4" />
                   Videos
                 </div>
-                <span>Max 500MB</span>
+                <span>Max 2GB</span>
               </div>
             </div>
           </div>
@@ -146,13 +155,23 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
         {isUploading && (
           <div className="mt-6 space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-zinc-300">Uploading files...</span>
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-zinc-400" />
+                <span className="text-zinc-300">
+                  {currentFile ? `Uploading ${currentFile}...` : 'Uploading files...'}
+                </span>
+              </div>
               <span className="text-zinc-500">{Math.round(uploadProgress)}%</span>
             </div>
             <div className="relative">
               <Progress value={uploadProgress} className="h-2 bg-zinc-900/50" />
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-sm" />
             </div>
+            {uploadProgress > 0 && uploadProgress < 100 && (
+              <p className="text-xs text-zinc-500 text-center">
+                Large files may take several minutes to upload
+              </p>
+            )}
           </div>
         )}
       </div>

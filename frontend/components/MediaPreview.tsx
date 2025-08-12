@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, Download, Calendar, HardDrive, Image as ImageIcon, Video, AlertCircle } from 'lucide-react';
+import { X, Download, Calendar, HardDrive, Image as ImageIcon, Video, AlertCircle, Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/components/ui/use-toast';
 import { usePreviewUrl } from '../hooks/usePreviewUrl';
 import { useDownloadFile } from '../hooks/useDownloadFile';
@@ -15,6 +16,13 @@ interface MediaPreviewProps {
 
 export function MediaPreview({ file, onClose }: MediaPreviewProps) {
   const [imageError, setImageError] = useState(false);
+  const [videoRef, setVideoRef] = useState<HTMLVideoElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  
   const { toast } = useToast();
   const { data: previewData, isLoading, error } = usePreviewUrl(file.id);
   const { downloadFile, isDownloading } = useDownloadFile();
@@ -42,12 +50,73 @@ export function MediaPreview({ file, onClose }: MediaPreviewProps) {
     }
   };
 
+  const togglePlayPause = () => {
+    if (videoRef) {
+      if (isPlaying) {
+        videoRef.pause();
+      } else {
+        videoRef.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef) {
+      videoRef.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (videoRef) {
+      setCurrentTime(videoRef.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (videoRef) {
+      setDuration(videoRef.duration);
+    }
+  };
+
+  const handleSeek = (value: number[]) => {
+    if (videoRef) {
+      videoRef.currentTime = value[0];
+      setCurrentTime(value[0]);
+    }
+  };
+
+  const handleVolumeChange = (value: number[]) => {
+    if (videoRef) {
+      videoRef.volume = value[0];
+      setVolume(value[0]);
+      setIsMuted(value[0] === 0);
+    }
+  };
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const toggleFullscreen = () => {
+    if (videoRef) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        videoRef.requestFullscreen();
+      }
+    }
+  };
+
   return (
     <div 
       className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
-      <div className="relative bg-zinc-950/95 backdrop-blur-2xl rounded-2xl max-w-4xl max-h-[90vh] w-full overflow-hidden shadow-2xl border border-zinc-800/50">
+      <div className="relative bg-zinc-950/95 backdrop-blur-2xl rounded-2xl max-w-6xl max-h-[95vh] w-full overflow-hidden shadow-2xl border border-zinc-800/50">
         <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/20 via-transparent to-zinc-900/20" />
         
         {/* Header */}
@@ -89,9 +158,9 @@ export function MediaPreview({ file, onClose }: MediaPreviewProps) {
         </div>
 
         {/* Content */}
-        <div className="relative flex flex-col lg:flex-row max-h-[calc(90vh-80px)]">
+        <div className="relative flex flex-col lg:flex-row max-h-[calc(95vh-80px)]">
           {/* Media Display */}
-          <div className="flex-1 bg-black/50 flex items-center justify-center min-h-[300px] lg:min-h-[400px] relative">
+          <div className="flex-1 bg-black/50 flex flex-col items-center justify-center min-h-[400px] lg:min-h-[500px] relative">
             <div className="absolute inset-0 bg-gradient-to-br from-zinc-950/20 via-transparent to-zinc-950/20" />
             {isLoading ? (
               <div className="relative animate-pulse">
@@ -114,14 +183,85 @@ export function MediaPreview({ file, onClose }: MediaPreviewProps) {
                 onError={() => setImageError(true)}
               />
             ) : (
-              <video
-                src={previewData.previewUrl}
-                controls
-                className="relative max-w-full max-h-full rounded-lg shadow-2xl"
-                onError={() => setImageError(true)}
-              >
-                Your browser does not support the video tag.
-              </video>
+              <div className="relative w-full h-full flex flex-col">
+                <div className="flex-1 flex items-center justify-center">
+                  <video
+                    ref={setVideoRef}
+                    src={previewData.previewUrl}
+                    className="relative max-w-full max-h-full rounded-lg shadow-2xl"
+                    onError={() => setImageError(true)}
+                    onTimeUpdate={handleTimeUpdate}
+                    onLoadedMetadata={handleLoadedMetadata}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+                
+                {/* Video Controls */}
+                {videoRef && (
+                  <div className="relative p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="space-y-3">
+                      {/* Progress Bar */}
+                      <div className="flex items-center gap-3 text-sm text-zinc-300">
+                        <span className="min-w-[40px]">{formatTime(currentTime)}</span>
+                        <Slider
+                          value={[currentTime]}
+                          max={duration || 100}
+                          step={1}
+                          onValueChange={handleSeek}
+                          className="flex-1"
+                        />
+                        <span className="min-w-[40px]">{formatTime(duration)}</span>
+                      </div>
+                      
+                      {/* Control Buttons */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={togglePlayPause}
+                            className="text-white hover:bg-white/10"
+                          >
+                            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                          
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={toggleMute}
+                            className="text-white hover:bg-white/10"
+                          >
+                            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                          </Button>
+                          
+                          <div className="flex items-center gap-2 ml-2">
+                            <Volume2 className="w-3 h-3 text-zinc-400" />
+                            <Slider
+                              value={[volume]}
+                              max={1}
+                              step={0.1}
+                              onValueChange={handleVolumeChange}
+                              className="w-20"
+                            />
+                          </div>
+                        </div>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={toggleFullscreen}
+                          className="text-white hover:bg-white/10"
+                        >
+                          <Maximize className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
