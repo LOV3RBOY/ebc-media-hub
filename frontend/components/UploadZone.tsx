@@ -63,7 +63,7 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
         <Button
           onClick={() => setIsExpanded(true)}
           size="lg"
-          className="gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+          className="gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-300 transform hover:scale-105 border-0"
         >
           <Upload className="w-5 h-5" />
           Upload Media
@@ -73,16 +73,16 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/50 shadow-sm overflow-hidden">
+    <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 shadow-xl overflow-hidden">
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-slate-900">Upload Media</h2>
+          <h2 className="text-lg font-semibold text-white">Upload Media</h2>
           {!isUploading && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(false)}
-              className="text-slate-400 hover:text-slate-600"
+              className="text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -92,10 +92,10 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
         <div
           {...getRootProps()}
           className={cn(
-            "border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200",
+            "border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300",
             isDragActive
-              ? "border-blue-400 bg-blue-50/50"
-              : "border-slate-300 hover:border-slate-400 hover:bg-slate-50/50",
+              ? "border-blue-400 bg-blue-500/10 shadow-lg shadow-blue-500/20"
+              : "border-slate-600 hover:border-slate-500 hover:bg-slate-800/30",
             isUploading && "opacity-50 cursor-not-allowed"
           )}
         >
@@ -104,25 +104,25 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
           <div className="space-y-4">
             <div className="flex justify-center">
               {isDragActive ? (
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Upload className="w-8 h-8 text-blue-600" />
+                <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/20">
+                  <Upload className="w-8 h-8 text-blue-400" />
                 </div>
               ) : (
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
-                  <Upload className="w-8 h-8 text-slate-600" />
+                <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-slate-400" />
                 </div>
               )}
             </div>
 
             <div>
-              <p className="text-lg font-medium text-slate-900 mb-2">
+              <p className="text-lg font-medium text-white mb-2">
                 {isDragActive ? "Drop files here" : "Drag & drop files here"}
               </p>
-              <p className="text-sm text-slate-500 mb-4">
+              <p className="text-sm text-slate-400 mb-4">
                 or click to browse your device
               </p>
               
-              <div className="flex items-center justify-center gap-6 text-xs text-slate-400">
+              <div className="flex items-center justify-center gap-6 text-xs text-slate-500">
                 <div className="flex items-center gap-1">
                   <FileImage className="w-4 h-4" />
                   Images
@@ -140,10 +140,10 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
         {isUploading && (
           <div className="mt-6 space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-600">Uploading files...</span>
-              <span className="text-slate-500">{Math.round(uploadProgress)}%</span>
+              <span className="text-slate-300">Uploading files...</span>
+              <span className="text-slate-400">{Math.round(uploadProgress)}%</span>
             </div>
-            <Progress value={uploadProgress} className="h-2" />
+            <Progress value={uploadProgress} className="h-2 bg-slate-800" />
           </div>
         )}
       </div>
