@@ -14,9 +14,12 @@ const queryClient = new QueryClient({
 
 function AppInner() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <MediaHub />
-      <Toaster />
+    <div className="min-h-screen bg-black">
+      <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-black to-zinc-950" />
+      <div className="relative z-10">
+        <MediaHub />
+        <Toaster />
+      </div>
     </div>
   );
 }
